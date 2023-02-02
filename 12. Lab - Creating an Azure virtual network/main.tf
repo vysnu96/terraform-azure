@@ -56,16 +56,16 @@ resource "azurerm_storage_container" "test" {
   ]
 }
 
-resource "azurerm_storage_blob" "sample" {
-  name = "sample"
-  storage_account_name = azurerm_storage_account.WEstrg.name
-  storage_container_name = azurerm_storage_container.test.name
-  type = "Block"
-  source = "sample.txt"
-  depends_on = [
-    azurerm_storage_container.test
-  ]
-}
+# resource "azurerm_storage_blob" "sample" {
+#   name = "sample"
+#   storage_account_name = azurerm_storage_account.WEstrg.name
+#   storage_container_name = azurerm_storage_container.test.name
+#   type = "Block"
+#   source = "sample.txt"
+#   depends_on = [
+#     azurerm_storage_container.test
+#   ]
+# }
 
 resource "azurerm_virtual_network" "WEvnet" {
   name                = "WEvnet"
