@@ -16,28 +16,71 @@ provider "azurerm" {
   
 }
 
-
-locals {
-  resource_group="app-grp"
-  location="North Europe"
+resource "azurerm_resource_group" "dev-rg" {
+  name     = "WEdev"
+  location = "West Europe"
 }
 
-resource "azurerm_resource_group" "app_grp"{
-  name=local.resource_group
-  location=local.location
-}
+# Here we are creating a storage account.
+# The storage account service has more properties and hence there are more arguements we can specify here
 
-resource "azurerm_virtual_network" "app_network" {
-  name                = "app-network"
-  location            = local.location
-  resource_group_name = azurerm_resource_group.app_grp.name
-  address_space       = ["10.0.0.0/16"]
+resource "azurerm_storage_account" "WEstrg" {
+  name                     = "westrg1996"
+  resource_group_name      = azurerm_resource_group.dev-rg.name
+  location                 = azurerm_resource_group.dev-rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  shared_access_key_enabled = "true"
+  public_network_access_enabled = "true"
 
-  subnet {
-    name           = "SubnetA"
-    address_prefix = "10.0.1.0/24"
-  }  
-  tags {
-    env="development"
+  network_rules {
+    default_action             = "Deny"
+    ip_rules                   = ["100.0.0.1"]
+    virtual_network_subnet_ids = [azurerm_subnet.WEvnet-subnet1.id]
   }
+
+tags = {
+    environment = "development"
+  }
+  depends_on = [
+    azurerm_subnet.WEvnet-subnet1
+  ]
+}
+
+resource "azurerm_storage_container" "test" {
+  name = "test"
+  storage_account_name = azurerm_storage_account.WEstrg.name
+  container_access_type = "private"
+  depends_on = [
+    azurerm_storage_account.WEstrg
+  ]
+}
+
+resource "azurerm_storage_blob" "sample" {
+  name = "sample"
+  storage_account_name = azurerm_storage_account.WEstrg.name
+  storage_container_name = azurerm_storage_container.test.name
+  type = "Block"
+  source = "sample.txt"
+  depends_on = [
+    azurerm_storage_container.test
+  ]
+}
+
+resource "azurerm_virtual_network" "WEvnet" {
+  name                = "WEvnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.dev-rg.location
+  resource_group_name = azurerm_resource_group.dev-rg.name
+}
+
+resource "azurerm_subnet" "WEvnet-subnet1" {
+  name                 = "WEvnet-subnet1"
+  resource_group_name  = azurerm_resource_group.dev-rg.name
+  virtual_network_name = azurerm_virtual_network.WEvnet.name
+  address_prefixes     = ["10.0.2.0/24"]
+  service_endpoints    = ["Microsoft.Sql", "Microsoft.Storage"]
+  depends_on = [
+    azurerm_virtual_network.WEvnet
+  ]
 }
