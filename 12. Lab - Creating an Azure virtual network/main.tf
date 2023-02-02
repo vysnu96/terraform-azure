@@ -39,6 +39,6 @@ resource "azurerm_virtual_network" "app_network" {
     address_prefix = "10.0.1.0/24"
   }  
   tags {
-    env="dev"
+    env="development"
   }
 }
